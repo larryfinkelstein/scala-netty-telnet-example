@@ -1,4 +1,4 @@
-name := "telnet4"
+name := "scala-netty-telnet-example"
 
 version := "1.0"
 
