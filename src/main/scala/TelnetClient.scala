@@ -16,17 +16,23 @@ import scala.util.control.Breaks.{break, breakable}
   */
 object TelnetClient {
   val log = Logger("TelnetClient")
+
   def main(args: Array[String]) {
     // Print usage if no argument is specified.
     if (args.length != 2) {
-      System.err.println(s"Usage: ${TelnetClient.getClass.getSimpleName} <host> <port>")
-    } else {
-      // Parse options.
-      val host = args(0)
-      val port = args(1).toInt
+      log error s"Usage: ${TelnetClient.getClass.getSimpleName} <host> <port>"
+    }
+    // Parse options.
+    val host = args(0)
+    val port = args(1).toInt
 
+    new TelnetClient(host, port).run()
+  }
+
+  class TelnetClient(host: String, port: Int) {
+
+    def run() {
       val group: EventLoopGroup = new NioEventLoopGroup()
-
       try {
         val b: Bootstrap = new Bootstrap()
         b.group(group)
@@ -34,6 +40,7 @@ object TelnetClient {
           .handler(new TelnetClientInitializer)
 
         // Start the connection attempt.
+        //FIXME: Can we get rid of sync?
         val ch: Channel = b.connect(host, port).sync().channel()
 
         // Read commands from the stdin.
@@ -50,7 +57,7 @@ object TelnetClient {
             val start = System.currentTimeMillis()
             log info s"Sending $line"
             lastWriteFuture = ch.writeAndFlush(line + "\r\n")
-//            log info s"${System.nanoTime() - start}")
+            //            log info s"${System.nanoTime() - start}")
             lastWriteFuture.await()
             log info s"${System.currentTimeMillis() - start}"
 
@@ -76,6 +83,6 @@ object TelnetClient {
         group.shutdownGracefully()
       }
     }
-
   }
+
 }
